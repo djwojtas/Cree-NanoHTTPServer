@@ -14,6 +14,7 @@ public class Content
         contentTypes.put("png", "image/png");
         contentTypes.put("jpg", "image/jpeg");
         contentTypes.put("jpeg", "image/jpeg");
+        contentTypes.put("css", "text/css");
     }
 
     public boolean getContentPath(BufferedReader in)
@@ -41,15 +42,11 @@ public class Content
         System.out.println("Sending file of MIME " + getContentType());
         new Header(getContentType()).printHeader(new PrintWriter(out, true));
 
-        if(getContentType().equals("text/html"))
+        if(getContentType().equals("text/html") || getContentType().equals("text/css"))
         {
             return transferText(out);
         }
-        else if(getContentType().equals("image/png"))
-        {
-            return transferImg(out);
-        }
-        else if(getContentType().equals("image/jpeg"))
+        else if(getContentType().equals("image/png") || getContentType().equals("image/jpeg"))
         {
             return transferImg(out);
         }
