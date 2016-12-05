@@ -28,12 +28,9 @@ public class Cree
             try
             {
                 clientSocket = creeServer.serverSocket.accept();
-                System.out.println("Accepted client connection.");
 
-                creeServer.out = clientSocket.getOutputStream();
-                creeServer.in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
-                System.out.println("Connected to client.");
+                Thread newClient = new Thread(new ClientHandler(creeServer.serverSocket, clientSocket));
+                newClient.start();
             }
             catch(Exception e)
             {
@@ -41,32 +38,6 @@ public class Cree
                 Errors.pErr(Errors.CONNECT);
                 continue;
             }
-
-            Content toSend = new Content();
-
-            if(!(toSend.getContentPath(creeServer.in) && toSend.checkIfFileExists()))
-            {
-                toSend.path = "404.html";
-            }
-
-            toSend.transferContent(creeServer.out);
-
-            try
-            {
-                creeServer.out.flush();
-                creeServer.out.close();
-                creeServer.in.close();
-                clientSocket.close();
-            }
-            catch(Exception e)
-            {
-                e.printStackTrace();
-                Errors.pErr(Errors.DISCONNECT);
-                continue;
-            }
-
-
-            System.out.println("Closed connection.");
         }
 
         /*try
@@ -95,6 +66,63 @@ public class Cree
         {
             e.printStackTrace();
             return false;
+        }
+    }
+}
+
+class ClientHandler implements Runnable
+{
+    ServerSocket serverSocket;
+    Socket clientSocket;
+    OutputStream out;
+    BufferedReader in;
+
+    ClientHandler(ServerSocket serverSocket, Socket clientSocket)
+    {
+        this.serverSocket = serverSocket;
+        this.clientSocket = clientSocket;
+    }
+
+    public void run()
+    {
+        System.out.println("Accepted client connection in thread " + this);
+
+        try
+        {
+            out = clientSocket.getOutputStream();
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+            System.out.println("Connected to client.");
+        }
+        catch(Exception e)
+        {
+            Errors.pErr(Errors.CONNECT);
+        }
+
+        if(in != null)
+        {
+            Content toSend = new Content();
+
+            if(!(toSend.getContentPath(in) && toSend.checkIfFileExists()))
+            {
+                toSend.path = "404.html";
+            }
+
+            toSend.transferContent(out);
+
+            try
+            {
+                out.flush();
+                out.close();
+                in.close();
+                clientSocket.close();
+            }
+            catch(Exception e)
+            {
+                Errors.pErr(Errors.DISCONNECT);
+            }
+
+            System.out.println("Closed connection.");
         }
     }
 }
